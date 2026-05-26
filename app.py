@@ -169,29 +169,30 @@ def compare():
     })
 
 
-def _find_edge():
-    """Locate msedge.exe on Windows."""
-    paths = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+def _find_browser():
+    """Find a Chromium browser for --app mode. Returns (path, name) or (None, None)."""
+    candidates = [
+        ("Edge", [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            "msedge",
+        ]),
+        ("Chrome", [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            "chrome",
+        ]),
     ]
-    for p in paths:
-        if os.path.exists(p):
-            return p
-    found = shutil.which("msedge")
-    if found:
-        return found
-    return None
+    for name, paths in candidates:
+        for p in paths:
+            if os.path.exists(p) or shutil.which(p):
+                return shutil.which(p) or p, name
+    return None, None
 
 
 def main():
     host = "127.0.0.1"
     port = 5000
-
-    edge = _find_edge()
-    if not edge:
-        print("未找到 Microsoft Edge，请确认已安装。")
-        sys.exit(1)
 
     # Start Flask in daemon thread
     t = threading.Thread(
@@ -199,19 +200,26 @@ def main():
         daemon=True,
     )
     t.start()
-
-    # Wait for Flask to be ready
     time.sleep(1)
 
-    # Launch Edge in app mode (standalone window, no browser chrome)
-    proc = subprocess.Popen(
-        [edge, f"--app=http://{host}:{port}", "--window-size=1400,900"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    browser, name = _find_browser()
+    if browser:
+        proc = subprocess.Popen(
+            [browser, f"--app=http://{host}:{port}", "--window-size=1400,900"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        proc.wait()
+    else:
+        import webbrowser
+        webbrowser.open(f"http://{host}:{port}")
+        print("未找到 Edge/Chrome，已用默认浏览器打开。关闭程序请按 Ctrl+C。")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
-    # Block until user closes the Edge window
-    proc.wait()
     os._exit(0)
 
 
