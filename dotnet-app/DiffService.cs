@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using NPOI.HWPF;
 using NPOI.HWPF.UserModel;
+using UglyToad.PdfPig;
 
 namespace DocxDiffTool;
 
@@ -56,6 +57,10 @@ public static class DiffService
         if (read >= 8 && header[0] == 0xD0 && header[1] == 0xCF && header[2] == 0x11 && header[3] == 0xE0)
             return ExtractTextFromDoc(stream);
 
+        // PDF: starts with "%PDF"
+        if (read >= 4 && header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46)
+            return ExtractTextFromPdf(stream);
+
         // Fallback: plain text (.txt / .md)
         return ExtractTextFromPlainText(stream);
     }
@@ -97,6 +102,27 @@ public static class DiffService
             var line = string.Concat(texts);
             if (!string.IsNullOrWhiteSpace(line))
                 paragraphs.Add(line);
+        }
+        return paragraphs;
+    }
+
+    private static List<string> ExtractTextFromPdf(Stream stream)
+    {
+        var paragraphs = new List<string>();
+        using var pdf = PdfDocument.Open(stream);
+        foreach (var page in pdf.GetPages())
+        {
+            var pageText = page.Text;
+            if (!string.IsNullOrWhiteSpace(pageText))
+            {
+                var lines = pageText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (!string.IsNullOrWhiteSpace(trimmed))
+                        paragraphs.Add(trimmed);
+                }
+            }
         }
         return paragraphs;
     }

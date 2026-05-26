@@ -13,11 +13,11 @@ function setupDropZone(id, inputId, nameId, fileSlot) {
     zone.classList.add("dragover");
   });
   zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
-  const SUPPORTED_EXT = [".docx", ".doc", ".txt", ".md"];
+  const SUPPORTED_EXT = [".docx", ".doc", ".txt", ".md", ".pdf"];
   function acceptFile(f) {
     const name = f.name.toLowerCase();
     if (!SUPPORTED_EXT.some(ext => name.endsWith(ext))) {
-      alert("仅支持以下格式：.docx / .doc / .txt / .md\n\n不支持：.py 等其他格式。");
+      alert("仅支持以下格式：.docx / .doc / .pdf / .txt / .md\n\n不支持：.py 等其他格式。");
       return false;
     }
     return true;
