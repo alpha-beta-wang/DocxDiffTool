@@ -165,14 +165,16 @@ function makeUnifiedLine(d) {
     setContent(div, "+", d.new);
   } else if (d.type === "replace") {
     if (d.old_spans) {
+      const frag = document.createDocumentFragment();
       const oldDiv = document.createElement("div");
       oldDiv.className = `diff-line ${d.type}`;
       renderInlineSpans(oldDiv, d.old_spans, "old");
+      frag.appendChild(oldDiv);
       const newDiv = document.createElement("div");
       newDiv.className = `diff-line ${d.type}`;
       renderInlineSpans(newDiv, d.new_spans, "new");
-      oldDiv.after(newDiv);
-      return oldDiv;
+      frag.appendChild(newDiv);
+      return frag;
     } else {
       setContent(div, "−", d.old);
       const div2 = document.createElement("div");
