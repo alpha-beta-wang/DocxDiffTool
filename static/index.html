@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocxDiffTool</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <h1>DocxDiffTool</h1>
+  <span class="subtitle">上传两个 .docx 文件，逐段对比差异</span>
+</header>
+
+<main>
+  <section class="upload-area" id="uploadSection">
+    <div class="drop-zone" id="drop1">
+      <input type="file" accept=".docx" id="fileInput1" hidden>
+      <div class="drop-content">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        <p class="drop-label">上传原版文件</p>
+        <p class="drop-hint">拖拽或点击选择 .docx</p>
+        <p class="file-name" id="name1"></p>
+      </div>
+    </div>
+
+    <div class="vs-divider">
+      <span class="vs-badge">VS</span>
+    </div>
+
+    <div class="drop-zone" id="drop2">
+      <input type="file" accept=".docx" id="fileInput2" hidden>
+      <div class="drop-content">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        <p class="drop-label">上传新版文件</p>
+        <p class="drop-hint">拖拽或点击选择 .docx</p>
+        <p class="file-name" id="name2"></p>
+      </div>
+    </div>
+  </section>
+
+  <button class="compare-btn" id="compareBtn" disabled>开始对比</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>正在解析并对比文件...</p>
+  </div>
+
+  <section class="stats-bar" id="statsBar" style="display:none;">
+    <div class="stat equal"><span class="stat-num" id="statEqual">0</span> 未修改</div>
+    <div class="stat replaced"><span class="stat-num" id="statReplaced">0</span> 已修改</div>
+    <div class="stat deleted"><span class="stat-num" id="statDeleted">0</span> 已删除</div>
+    <div class="stat inserted"><span class="stat-num" id="statInserted">0</span> 新增</div>
+    <button class="toggle-view" id="toggleView">合并视图</button>
+  </section>
+
+  <section class="diff-container" id="diffContainer" style="display:none;">
+    <div class="diff-pane-wrapper" id="paneOld">
+      <div class="pane-header">原版 <span class="file-label" id="labelOld"></span></div>
+      <div class="diff-pane" id="paneOldContent"></div>
+    </div>
+    <div class="diff-pane-wrapper" id="paneNew">
+      <div class="pane-header">新版 <span class="file-label" id="labelNew"></span></div>
+      <div class="diff-pane" id="paneNewContent"></div>
+    </div>
+  </section>
+
+  <section class="unified-container" id="unifiedContainer" style="display:none;">
+    <div class="pane-header" style="border-radius:8px 8px 0 0;">统一对比视图</div>
+    <div class="diff-pane" id="unifiedContent"></div>
+  </section>
+</main>
+
+<footer>
+  <p>本工具由 2025-2026 届宣传委员 wys（wangyongsheng23@mails.ucas.ac.cn）制作，供文案组与推送组进行文案版本比对。以 GPLv3 协议开源分发（<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">许可证全文</a>），分发或修改时需保留相同协议。</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
