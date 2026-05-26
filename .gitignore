@@ -3,3 +3,6 @@ build/
 dist/
 *.spec
 *.pyc
+dotnet-app/bin/
+dotnet-app/obj/
+dotnet-app/dist/
