@@ -42,6 +42,11 @@ DocxDiffTool/
 
 ## 许可证
 
-以 CC BY-NC 4.0 协议分发，署名且非商业性使用。
+本项目以 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.zh) 协议开源分发。
+
+- **非商业使用**：可自由使用、修改、分发，无需另行授权，但须保留署名。
+- **商业使用**：需另行获得作者授权。如有商用需求，请联系 wangyongsheng23@mails.ucas.ac.cn。
+
+完整协议文本见 [LICENSE](LICENSE) 文件。
 
 本工具由 2025-2026 届宣传委员 wys（wangyongsheng23@mails.ucas.ac.cn）制作，供文案组与推送组进行文案版本比对。
