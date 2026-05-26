@@ -3,12 +3,14 @@
 
 import io
 import os
+import shutil
+import subprocess
 import sys
-import zipfile
-import webbrowser
+import threading
+import time
 import xml.etree.ElementTree as ET
+import zipfile
 from difflib import SequenceMatcher
-from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -39,7 +41,6 @@ def build_diffs(paras1, paras2):
     m = SequenceMatcher(None, paras1, paras2)
     diffs = []
 
-    # Merge adjacent 'delete' + 'insert' into 'replace'
     raw = m.get_opcodes()
 
     i = 0
@@ -50,11 +51,10 @@ def build_diffs(paras1, paras2):
                 diffs.append({"type": "equal", "old": p, "new": p})
         elif tag == "delete":
             if i + 1 < len(raw) and raw[i + 1][0] == "insert":
-                # Merge into replace
-                _, ni1, ni2, nj1, nj2 = raw[i + 1]
+                _, _ni1, _ni2, _nj1, _nj2 = raw[i + 1]
                 old_paras = paras1[i1:i2]
                 new_paras = paras2[j1:j2]
-                for op, np in _align_paragraphs(old_paras, new_paras):
+                for op in _align_paragraphs(old_paras, new_paras):
                     diffs.append(op)
                 i += 1
             else:
@@ -169,12 +169,50 @@ def compare():
     })
 
 
+def _find_edge():
+    """Locate msedge.exe on Windows."""
+    paths = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    found = shutil.which("msedge")
+    if found:
+        return found
+    return None
+
+
 def main():
     host = "127.0.0.1"
     port = 5000
-    print(f"DocxDiffTool 已启动 → http://{host}:{port}")
-    webbrowser.open(f"http://{host}:{port}")
-    app.run(host=host, port=port, debug=False)
+
+    edge = _find_edge()
+    if not edge:
+        print("未找到 Microsoft Edge，请确认已安装。")
+        sys.exit(1)
+
+    # Start Flask in daemon thread
+    t = threading.Thread(
+        target=lambda: app.run(host=host, port=port, debug=False, use_reloader=False),
+        daemon=True,
+    )
+    t.start()
+
+    # Wait for Flask to be ready
+    time.sleep(1)
+
+    # Launch Edge in app mode (standalone window, no browser chrome)
+    proc = subprocess.Popen(
+        [edge, f"--app=http://{host}:{port}", "--window-size=1400,900"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    # Block until user closes the Edge window
+    proc.wait()
+    os._exit(0)
 
 
 if __name__ == "__main__":
