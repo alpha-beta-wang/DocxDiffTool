@@ -13,11 +13,21 @@ function setupDropZone(id, inputId, nameId, fileSlot) {
     zone.classList.add("dragover");
   });
   zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+  const SUPPORTED_EXT = [".docx", ".doc", ".txt", ".md"];
+  function acceptFile(f) {
+    const name = f.name.toLowerCase();
+    if (!SUPPORTED_EXT.some(ext => name.endsWith(ext))) {
+      alert("仅支持以下格式：.docx / .doc / .txt / .md\n\n不支持：.py 等其他格式。");
+      return false;
+    }
+    return true;
+  }
+
   zone.addEventListener("drop", (e) => {
     e.preventDefault();
     zone.classList.remove("dragover");
     const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].name.endsWith(".docx")) {
+    if (files.length > 0 && acceptFile(files[0])) {
       fileSlot(files[0]);
       document.getElementById(nameId).textContent = files[0].name;
       zone.classList.add("loaded");
@@ -25,7 +35,7 @@ function setupDropZone(id, inputId, nameId, fileSlot) {
   });
 
   input.addEventListener("change", () => {
-    if (input.files.length > 0) {
+    if (input.files.length > 0 && acceptFile(input.files[0])) {
       fileSlot(input.files[0]);
       document.getElementById(nameId).textContent = input.files[0].name;
       zone.classList.add("loaded");

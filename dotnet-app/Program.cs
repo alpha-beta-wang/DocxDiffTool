@@ -31,7 +31,7 @@ static class Program
             var f1 = form.Files.GetFile("file1");
             var f2 = form.Files.GetFile("file2");
             if (f1 is null || f2 is null)
-                return Results.BadRequest(new { error = "请上传两个 .docx 文件" });
+                return Results.BadRequest(new { error = "请上传两个文件（支持 .docx / .doc / .txt / .md）" });
 
             List<string> paras1, paras2;
             try

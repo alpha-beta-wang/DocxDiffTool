@@ -1,6 +1,8 @@
 using System.IO.Compression;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
+using NPOI.HWPF;
+using NPOI.HWPF.UserModel;
 
 namespace DocxDiffTool;
 
@@ -43,16 +45,69 @@ public static class DiffService
 
     public static List<string> ExtractText(Stream stream)
     {
+        // Peek magic bytes to detect format
+        byte[] header = new byte[8];
+        int read = stream.Read(header, 0, header.Length);
+        stream.Position = 0;
+
+        if (read >= 4 && header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04)
+            return ExtractTextFromDocx(stream);
+
+        if (read >= 8 && header[0] == 0xD0 && header[1] == 0xCF && header[2] == 0x11 && header[3] == 0xE0)
+            return ExtractTextFromDoc(stream);
+
+        // Fallback: plain text (.txt / .md)
+        return ExtractTextFromPlainText(stream);
+    }
+
+    private static List<string> ExtractTextFromDocx(Stream stream)
+    {
         var paragraphs = new List<string>();
-        using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+        ZipArchive zip;
+        try { zip = new ZipArchive(stream, ZipArchiveMode.Read); }
+        catch (InvalidDataException)
+        {
+            throw new InvalidDataException("文件格式不支持。请上传 .docx 格式的 Word 文档。\n\n当前支持格式：.docx / .doc / .txt / .md");
+        }
         var entry = zip.GetEntry("word/document.xml")
-            ?? throw new InvalidDataException("Not a valid .docx file");
+            ?? throw new InvalidDataException("文件格式不支持。未在文件中找到 Word 文档内容。");
         using var xml = entry.Open();
         var doc = XDocument.Load(xml);
         foreach (var p in doc.Descendants(W + "p"))
         {
             var texts = p.Descendants(W + "t").Select(t => t.Value);
             var line = string.Concat(texts);
+            if (!string.IsNullOrWhiteSpace(line))
+                paragraphs.Add(line);
+        }
+        return paragraphs;
+    }
+
+    private static List<string> ExtractTextFromDoc(Stream stream)
+    {
+        var paragraphs = new List<string>();
+        var hwpfDoc = new HWPFDocument(stream);
+        var range = hwpfDoc.GetRange();
+        for (int i = 0; i < range.NumParagraphs; i++)
+        {
+            var para = range.GetParagraph(i);
+            var texts = new List<string>();
+            for (int j = 0; j < para.NumCharacterRuns; j++)
+                texts.Add(para.GetCharacterRun(j).Text);
+            var line = string.Concat(texts);
+            if (!string.IsNullOrWhiteSpace(line))
+                paragraphs.Add(line);
+        }
+        return paragraphs;
+    }
+
+    private static List<string> ExtractTextFromPlainText(Stream stream)
+    {
+        var paragraphs = new List<string>();
+        using var reader = new StreamReader(stream);
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
             if (!string.IsNullOrWhiteSpace(line))
                 paragraphs.Add(line);
         }
