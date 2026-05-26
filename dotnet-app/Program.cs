@@ -80,6 +80,7 @@ static class Program
         serverThread.Start();
         serverReady.Wait();
 
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
@@ -98,8 +99,17 @@ static class Program
 
         form.Load += async (_, _) =>
         {
-            await webView.EnsureCoreWebView2Async();
+            var userData = Path.Combine(Path.GetTempPath(), "DocxDiffTool_WebView2");
+            var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment
+                .CreateAsync(null, userData);
+            await webView.EnsureCoreWebView2Async(env);
             webView.CoreWebView2.Navigate(url);
+        };
+
+        form.FormClosed += (_, _) =>
+        {
+            try { Directory.Delete(Path.Combine(Path.GetTempPath(), "DocxDiffTool_WebView2"), true); }
+            catch { /* ignore cleanup failures */ }
         };
 
         Application.Run(form);
