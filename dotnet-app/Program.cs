@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -103,6 +104,11 @@ static class Program
             var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment
                 .CreateAsync(null, userData);
             await webView.EnsureCoreWebView2Async(env);
+            webView.CoreWebView2.NewWindowRequested += (sender, e) =>
+            {
+                e.Handled = true;
+                Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true });
+            };
             webView.CoreWebView2.Navigate(url);
         };
 
