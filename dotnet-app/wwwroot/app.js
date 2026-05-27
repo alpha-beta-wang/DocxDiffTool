@@ -230,6 +230,15 @@ function syncScroll(paneA, paneB) {
   });
 }
 
+// --- External links via backend (Photino doesn't open new windows) ---
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a");
+  if (a && a.href && a.href.startsWith("http")) {
+    e.preventDefault();
+    fetch("/api/open-external?url=" + encodeURIComponent(a.href));
+  }
+});
+
 // --- Toggle view ---
 document.getElementById("toggleView").addEventListener("click", () => {
   const side = document.getElementById("diffContainer");

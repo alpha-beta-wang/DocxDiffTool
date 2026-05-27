@@ -1,10 +1,12 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Web.WebView2.WinForms;
+using Photino.NET;
 
 namespace DocxDiffTool;
 
@@ -20,7 +22,6 @@ static class Program
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             EnvironmentName = Environments.Production,
-            WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot"),
         });
         builder.WebHost.UseUrls(url);
 
@@ -68,8 +69,17 @@ static class Program
             });
         });
 
-        app.UseDefaultFiles();
-        app.UseStaticFiles();
+        var embeddedProvider = new ManifestEmbeddedFileProvider(
+            Assembly.GetExecutingAssembly(), "wwwroot");
+        app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = embeddedProvider });
+        app.UseStaticFiles(new StaticFileOptions { FileProvider = embeddedProvider });
+
+        app.MapGet("/api/open-external", (string url) =>
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+            catch { /* ignore */ }
+            return Results.Ok();
+        });
 
         var serverReady = new ManualResetEventSlim();
         var serverThread = new Thread(() =>
@@ -81,43 +91,13 @@ static class Program
         serverThread.Start();
         serverReady.Wait();
 
-        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-        Application.EnableVisualStyles();
-        Application.SetCompatibleTextRenderingDefault(false);
+        var window = new PhotinoWindow()
+            .SetTitle("DocxDiffTool")
+            .SetSize(1400, 900)
+            .Center()
+            .Load(url);
 
-        var form = new Form
-        {
-            Text = "DocxDiffTool",
-            Width = 1400,
-            Height = 900,
-            StartPosition = FormStartPosition.CenterScreen,
-            MinimumSize = new Size(900, 600),
-        };
-        form.FormClosed += (_, _) => Environment.Exit(0);
-
-        var webView = new WebView2 { Dock = DockStyle.Fill };
-        form.Controls.Add(webView);
-
-        form.Load += async (_, _) =>
-        {
-            var userData = Path.Combine(Path.GetTempPath(), "DocxDiffTool_WebView2");
-            var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment
-                .CreateAsync(null, userData);
-            await webView.EnsureCoreWebView2Async(env);
-            webView.CoreWebView2.NewWindowRequested += (sender, e) =>
-            {
-                e.Handled = true;
-                Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true });
-            };
-            webView.CoreWebView2.Navigate(url);
-        };
-
-        form.FormClosed += (_, _) =>
-        {
-            try { Directory.Delete(Path.Combine(Path.GetTempPath(), "DocxDiffTool_WebView2"), true); }
-            catch { /* ignore cleanup failures */ }
-        };
-
-        Application.Run(form);
+        window.WaitForClose();
+        Environment.Exit(0);
     }
 }
