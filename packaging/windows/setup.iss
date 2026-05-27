@@ -4,6 +4,9 @@
 #define MyAppURL "https://github.com/alpha-beta-wang/DocxDiffTool"
 #define MyAppExeName "DocxDiffTool.exe"
 #define MyAppIcon "..\..\dotnet-app\logo.ico"
+#ifndef MyArch
+  #define MyArch "x64"
+#endif
 
 [Setup]
 AppId={{B3F1E8D2-9A5C-4F7E-A1B6-D4C8E9F2A3D7}
@@ -16,7 +19,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputDir=..\..\dotnet-app\dist\installer\windows
-OutputBaseFilename=DocxDiffTool_Setup
+OutputBaseFilename=DocxDiffTool_{#MyArch}_Setup
 SetupIconFile={#MyAppIcon}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2
@@ -29,7 +32,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional icons:"
 
 [Files]
-Source: "..\..\dotnet-app\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "installer\*"
+Source: "..\..\dotnet-app\dist\win-{#MyArch}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "installer\*"
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
