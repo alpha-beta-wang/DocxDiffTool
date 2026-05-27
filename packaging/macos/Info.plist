@@ -16,6 +16,8 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>DocxDiffTool</string>
+    <key>CFBundleIconFile</key>
+    <string>appicon</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleDevelopmentRegion</key>
